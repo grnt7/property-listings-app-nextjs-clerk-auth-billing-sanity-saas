@@ -23,10 +23,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { client } from "@/lib/sanity/client";
 import { urlFor } from "@/lib/sanity/image";
 import { sanityFetch } from "@/lib/sanity/live";
-import { AGENT_LISTINGS_QUERY } from "@/lib/sanity/queries";
+import {
+  AGENT_LISTINGS_QUERY,
+  AGENT_ONBOARDING_CHECK_QUERY,
+} from "@/lib/sanity/queries";
 
 export default async function ListingsPage() {
   const { userId } = await auth();
@@ -35,10 +37,10 @@ export default async function ListingsPage() {
     redirect("/sign-in");
   }
 
-  const agent = await client.fetch(
-    `*[_type == "agent" && userId == $userId][0]{ _id, onboardingComplete }`,
-    { userId },
-  );
+  const { data: agent } = await sanityFetch({
+    query: AGENT_ONBOARDING_CHECK_QUERY,
+    params: { userId },
+  });
 
   if (!agent?.onboardingComplete) {
     redirect("/dashboard/onboarding");

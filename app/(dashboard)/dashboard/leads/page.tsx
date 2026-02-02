@@ -13,9 +13,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { client } from "@/lib/sanity/client";
 import { sanityFetch } from "@/lib/sanity/live";
-import { AGENT_LEADS_QUERY } from "@/lib/sanity/queries";
+import {
+  AGENT_LEADS_QUERY,
+  AGENT_ONBOARDING_CHECK_QUERY,
+} from "@/lib/sanity/queries";
 
 export default async function LeadsPage() {
   const { userId } = await auth();
@@ -24,7 +26,10 @@ export default async function LeadsPage() {
     redirect("/sign-in");
   }
 
-  const agent = await getAgentByUserId(userId);
+  const { data: agent } = await sanityFetch({
+    query: AGENT_ONBOARDING_CHECK_QUERY,
+    params: { userId },
+  });
 
   if (!agent?.onboardingComplete) {
     redirect("/dashboard/onboarding");
