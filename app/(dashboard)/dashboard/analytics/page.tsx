@@ -1,9 +1,8 @@
-import { auth } from "@clerk/nextjs/server";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 import { sanityFetch } from "@/lib/sanity/live";
 import {
-  ANALYTICS_AGENT_QUERY,
+  AGENT_ID_BY_USER_QUERY,
   ANALYTICS_LISTINGS_TOTAL_QUERY,
   ANALYTICS_LISTINGS_ACTIVE_QUERY,
   ANALYTICS_LISTINGS_PENDING_QUERY,
@@ -41,21 +40,13 @@ export type AnalyticsData = {
 };
 
 export default async function AnalyticsPage() {
-  // Auth redirect handled by middleware (proxy.ts) and layout
+  // Middleware guarantees: authenticated + has agent plan + onboarding complete
   const { userId } = await auth();
 
   const { data: agent } = await sanityFetch({
-    query: ANALYTICS_AGENT_QUERY,
+    query: AGENT_ID_BY_USER_QUERY,
     params: { userId },
   });
-
-  if (!agent) {
-    redirect("/pricing");
-  }
-
-  if (!agent.onboardingComplete) {
-    redirect("/dashboard/onboarding");
-  }
 
   // Fetch all analytics data using sanityFetch for real-time updates
   const [

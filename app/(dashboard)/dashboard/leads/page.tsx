@@ -1,7 +1,6 @@
-import { auth } from "@clerk/nextjs/server";
 import { ExternalLink, MessageSquare } from "lucide-react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 import { LeadStatusSelect } from "@/components/dashboard/LeadStatusSelect";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeader } from "@/components/ui/section-header";
@@ -15,25 +14,18 @@ import {
 } from "@/components/ui/table";
 import { sanityFetch } from "@/lib/sanity/live";
 import {
+  AGENT_ID_BY_USER_QUERY,
   AGENT_LEADS_QUERY,
-  AGENT_ONBOARDING_CHECK_QUERY,
 } from "@/lib/sanity/queries";
 
 export default async function LeadsPage() {
+  // Middleware guarantees: authenticated + has agent plan + onboarding complete
   const { userId } = await auth();
 
-  if (!userId) {
-    redirect("/sign-in");
-  }
-
   const { data: agent } = await sanityFetch({
-    query: AGENT_ONBOARDING_CHECK_QUERY,
+    query: AGENT_ID_BY_USER_QUERY,
     params: { userId },
   });
-
-  if (!agent?.onboardingComplete) {
-    redirect("/dashboard/onboarding");
-  }
 
   const { data: leads } = await sanityFetch({
     query: AGENT_LEADS_QUERY,

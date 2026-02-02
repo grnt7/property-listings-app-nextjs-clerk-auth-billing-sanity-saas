@@ -1,8 +1,7 @@
-import { auth } from "@clerk/nextjs/server";
 import { MoreHorizontal, Pencil, Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 import { DeleteListingButton } from "@/components/dashboard/DeleteListingButton";
 import { ListingStatusSelect } from "@/components/dashboard/ListingStatusSelect";
 import { Button } from "@/components/ui/button";
@@ -26,25 +25,18 @@ import {
 import { urlFor } from "@/lib/sanity/image";
 import { sanityFetch } from "@/lib/sanity/live";
 import {
+  AGENT_ID_BY_USER_QUERY,
   AGENT_LISTINGS_QUERY,
-  AGENT_ONBOARDING_CHECK_QUERY,
 } from "@/lib/sanity/queries";
 
 export default async function ListingsPage() {
+  // Middleware guarantees: authenticated + has agent plan + onboarding complete
   const { userId } = await auth();
 
-  if (!userId) {
-    redirect("/sign-in");
-  }
-
   const { data: agent } = await sanityFetch({
-    query: AGENT_ONBOARDING_CHECK_QUERY,
+    query: AGENT_ID_BY_USER_QUERY,
     params: { userId },
   });
-
-  if (!agent?.onboardingComplete) {
-    redirect("/dashboard/onboarding");
-  }
 
   const { data: listings } = await sanityFetch({
     query: AGENT_LISTINGS_QUERY,
