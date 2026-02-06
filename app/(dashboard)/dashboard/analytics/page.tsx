@@ -39,6 +39,12 @@ export type AnalyticsData = {
   }>;
 };
 
+const EMPTY_ANALYTICS: AnalyticsData = {
+  listings: { total: 0, active: 0, pending: 0, sold: 0 },
+  leads: { total: 0, new: 0, contacted: 0, closed: 0 },
+  leadsByProperty: [],
+};
+
 export default async function AnalyticsPage() {
   // Middleware guarantees: authenticated + has agent plan + onboarding complete
   const { userId } = await auth();
@@ -47,6 +53,13 @@ export default async function AnalyticsPage() {
     query: AGENT_ID_BY_USER_QUERY,
     params: { userId },
   });
+
+  // No agent at build time (e.g. static export) or user has no agent yet → render empty so build doesn't fail
+  if (!agent?._id) {
+    return <AnalyticsDashboard data={EMPTY_ANALYTICS} />;
+  }
+
+  const agentId = agent._id;
 
   // Fetch all analytics data using sanityFetch for real-time updates
   const [
@@ -60,44 +73,41 @@ export default async function AnalyticsPage() {
     { data: closedLeads },
     { data: leadsByProperty },
   ] = await Promise.all([
-    // Listing counts
     sanityFetch({
       query: ANALYTICS_LISTINGS_TOTAL_QUERY,
-      params: { agentId: agent._id },
+      params: { agentId },
     }),
     sanityFetch({
       query: ANALYTICS_LISTINGS_ACTIVE_QUERY,
-      params: { agentId: agent._id },
+      params: { agentId },
     }),
     sanityFetch({
       query: ANALYTICS_LISTINGS_PENDING_QUERY,
-      params: { agentId: agent._id },
+      params: { agentId },
     }),
     sanityFetch({
       query: ANALYTICS_LISTINGS_SOLD_QUERY,
-      params: { agentId: agent._id },
+      params: { agentId },
     }),
-    // Lead counts
     sanityFetch({
       query: ANALYTICS_LEADS_TOTAL_QUERY,
-      params: { agentId: agent._id },
+      params: { agentId },
     }),
     sanityFetch({
       query: ANALYTICS_LEADS_NEW_QUERY,
-      params: { agentId: agent._id },
+      params: { agentId },
     }),
     sanityFetch({
       query: ANALYTICS_LEADS_CONTACTED_QUERY,
-      params: { agentId: agent._id },
+      params: { agentId },
     }),
     sanityFetch({
       query: ANALYTICS_LEADS_CLOSED_QUERY,
-      params: { agentId: agent._id },
+      params: { agentId },
     }),
-    // Leads grouped by property
     sanityFetch({
       query: ANALYTICS_LEADS_BY_PROPERTY_QUERY,
-      params: { agentId: agent._id },
+      params: { agentId },
     }),
   ]);
 
@@ -114,7 +124,7 @@ export default async function AnalyticsPage() {
       contacted: contactedLeads,
       closed: closedLeads,
     },
-    leadsByProperty: leadsByProperty.map(
+    leadsByProperty: (leadsByProperty ?? []).map(
       (p: { title: string | null; leadCount: number }) => ({
         name:
           p.title && p.title.length > 20
